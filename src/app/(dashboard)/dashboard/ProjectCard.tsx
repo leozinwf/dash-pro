@@ -95,40 +95,13 @@ export default function ProjectCard({ projeto }: { projeto: any }) {
                       </span>
                     )}
 
-                    {projeto.supabaseInfo.status === 'UNHEALTHY' && (
+                    {projeto.supabaseInfo.status === 'Unhealthy' && (
                       <span className="flex items-center gap-1.5 text-yellow-600">
                         <AlertTriangle size={14} />
                         Instável
                       </span>
                     )}
                   </div>
-
-                  {projeto.dbMetrics && (
-                    <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-gray-100">
-                      <div>
-                        <p className="text-[10px] text-gray-500 uppercase font-semibold">
-                          Transações Totais (BD)
-                        </p>
-                        <p className="text-sm font-medium text-gray-900">
-                          {new Intl.NumberFormat('pt-BR').format(projeto.dbMetrics.total_requests)}
-                        </p>
-                      </div>
-
-                      <div>
-                        <p className="text-[10px] text-gray-500 uppercase font-semibold">
-                          Taxa de Sucesso
-                        </p>
-                        <p
-                          className={`text-sm font-medium ${projeto.dbMetrics.success_rate >= 99
-                              ? 'text-green-600'
-                              : 'text-orange-600'
-                            }`}
-                        >
-                          {projeto.dbMetrics.success_rate}%
-                        </p>
-                      </div>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <span className="text-sm text-gray-400">Ref não configurada</span>

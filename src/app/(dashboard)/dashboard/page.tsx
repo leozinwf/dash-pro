@@ -18,16 +18,36 @@ async function getGithubStatus(repo: string | null) {
   } catch { return null; }
 }
 
-async function getSupabaseStatus(ref: string | null) {
-  if (!ref || !process.env.SUPABASE_MANAGEMENT_TOKEN) return null;
+async function getSupabaseStatus(ref: string | null, tokenName: string | null) {
+  if (!ref) {
+    console.log("Sem supabase_id");
+    return null;
+  }
+
+  // Monta o nome da variável de ambiente com base no tokenName fornecido
+  // Exemplo: se tokenName for 'leozinworkflow', busca SUPABASE_MANAGEMENT_TOKEN_leozinworkflow
+  const envVarName = tokenName ? `SUPABASE_MANAGEMENT_TOKEN_${tokenName}` : 'SUPABASE_MANAGEMENT_TOKEN';
+  const token = process.env[envVarName];
+
+  if (!token) {
+    console.error(`Token não encontrado para: ${envVarName}`);
+    return null;
+  }
+
   try {
     const res = await fetch(`https://api.supabase.com/v1/projects/${ref}`, {
-      headers: { Authorization: `Bearer ${process.env.SUPABASE_MANAGEMENT_TOKEN}` },
-      next: { revalidate: 60 }
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      next: { revalidate: 60 },
     });
+
     if (!res.ok) return null;
     return await res.json();
-  } catch { return null; }
+  } catch (e) {
+    console.log(e);
+    return null;
+  }
 }
 
 async function getSupabaseMetrics(ref: string | null, anonKey: string | null) {
@@ -100,7 +120,7 @@ export default async function DashboardPage() {
       const extractedKey = extractAnonKey(projeto.env_file, projeto.env_local_file);
       const [github, supabaseInfo, dbMetrics, vercelDeployments] = await Promise.all([
         getGithubStatus(projeto.github_repo),
-        getSupabaseStatus(projeto.supabase_id),
+        getSupabaseStatus(projeto.supabase_id, projeto.supabase_token_name),
         getSupabaseMetrics(projeto.supabase_id, extractedKey),
         getVercelDeployments(projeto.vercel_id)
       ]);
