@@ -1,10 +1,9 @@
-// src/app/(dashboard)/projetos/novo/page.tsx
 "use client"
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
-import { ArrowLeft, Save, FolderGit, Link as LinkIcon, Database, FileText, AlignLeft, Lock } from 'lucide-react'
+import { ArrowLeft, Save, FolderGit, Link as LinkIcon, Database, FileText, AlignLeft, Lock, Server, AtSign } from 'lucide-react'
 import Link from 'next/link'
 
 export default function NovoProjetoPage() {
@@ -14,8 +13,10 @@ export default function NovoProjetoPage() {
   const [nome, setNome] = useState('')
   const [githubRepo, setGithubRepo] = useState('')
   const [projetoUrl, setProjetoUrl] = useState('')
+  const [vercelId, setVercelId] = useState('')
   const [supabaseId, setSupabaseId] = useState('')
-  const [databasePassword, setDatabasePassword] = useState('') // <- NOVO CAMPO
+  const [supabaseAccount, setSupabaseAccount] = useState('')
+  const [databasePassword, setDatabasePassword] = useState('')
   const [observacoes, setObservacoes] = useState('')
   const [envFile, setEnvFile] = useState('')
   const [envLocalFile, setEnvLocalFile] = useState('')
@@ -23,11 +24,11 @@ export default function NovoProjetoPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const handleEnvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEnvUpload = (e: React.ChangeEvent<HTMLInputElement>, setter: (val: string) => void) => {
     const file = e.target.files?.[0]
     if (file) {
       const reader = new FileReader()
-      reader.onload = (event) => setEnvFile(event.target?.result as string)
+      reader.onload = (event) => setter(event.target?.result as string)
       reader.readAsText(file)
     }
   }
@@ -41,7 +42,6 @@ export default function NovoProjetoPage() {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
       if (sessionError || !session) throw new Error("Sessão não encontrada.")
 
-      // Limpa a URL do GitHub caso o usuário cole o link completo
       const cleanGithubRepo = githubRepo
         .replace('https://github.com/', '')
         .replace('.git', '')
@@ -53,7 +53,9 @@ export default function NovoProjetoPage() {
           nome,
           github_repo: cleanGithubRepo,
           projeto_url: projetoUrl,
+          vercel_id: vercelId,
           supabase_id: supabaseId,
+          supabase_account: supabaseAccount,
           database_password: databasePassword,
           env_file: envFile,
           env_local_file: envLocalFile,
@@ -114,14 +116,30 @@ export default function NovoProjetoPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
-                  <Database size={16} /> Supabase Project Ref
+                  <Server size={16} /> Vercel Project ID
                 </label>
-                <input type="text" value={supabaseId} onChange={(e) => setSupabaseId(e.target.value)} placeholder="abcdefghijklmnopqrst" className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition" />
+                <input type="text" value={vercelId} onChange={(e) => setVercelId(e.target.value)} placeholder="prj_..." className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition" />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
-                  <Lock size={16} /> Senha do Banco (DB Password)
+                  <Database size={16} /> Supabase Project Ref
+                </label>
+                <input type="text" value={supabaseId} onChange={(e) => setSupabaseId(e.target.value)} placeholder="abcdefghijklmnopqrst" className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                  <AtSign size={16} /> Conta Supabase
+                </label>
+                <input type="email" value={supabaseAccount} onChange={(e) => setSupabaseAccount(e.target.value)} placeholder="seu@email.com" className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition" />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                  <Lock size={16} /> Senha do Banco
                 </label>
                 <input type="password" value={databasePassword} onChange={(e) => setDatabasePassword(e.target.value)} placeholder="Sua senha do banco..." className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition" />
               </div>
@@ -132,9 +150,7 @@ export default function NovoProjetoPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
                   <FileText size={16} /> Arquivo .env
                 </label>
-                <input type="file" accept=".env,text/plain" onChange={(e) => {
-                  const file = e.target.files?.[0]; if (file) { const r = new FileReader(); r.onload = (ev) => setEnvFile(ev.target?.result as string); r.readAsText(file); }
-                }} className="w-full px-4 py-1.5 bg-white text-gray-900 border border-gray-300 rounded-lg outline-none transition file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700" />
+                <input type="file" accept=".env,text/plain" onChange={(e) => handleEnvUpload(e, setEnvFile)} className="w-full px-4 py-1.5 bg-white text-gray-900 border border-gray-300 rounded-lg outline-none transition file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700" />
                 {envFile && <p className="mt-1 text-xs text-green-600 font-medium">Arquivo carregado.</p>}
               </div>
 
@@ -142,9 +158,7 @@ export default function NovoProjetoPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
                   <FileText size={16} /> Arquivo .env.local
                 </label>
-                <input type="file" accept=".local,.env,text/plain" onChange={(e) => {
-                  const file = e.target.files?.[0]; if (file) { const r = new FileReader(); r.onload = (ev) => setEnvLocalFile(ev.target?.result as string); r.readAsText(file); }
-                }} className="w-full px-4 py-1.5 bg-white text-gray-900 border border-gray-300 rounded-lg outline-none transition file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700" />
+                <input type="file" accept=".local,.env,text/plain" onChange={(e) => handleEnvUpload(e, setEnvLocalFile)} className="w-full px-4 py-1.5 bg-white text-gray-900 border border-gray-300 rounded-lg outline-none transition file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700" />
                 {envLocalFile && <p className="mt-1 text-xs text-green-600 font-medium">Arquivo local carregado.</p>}
               </div>
             </div>

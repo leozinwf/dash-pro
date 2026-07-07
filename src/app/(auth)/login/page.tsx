@@ -27,7 +27,7 @@ export default function LoginPage() {
       setLoading(false)
     } else {
       router.push('/dashboard')
-      router.refresh() // Atualiza o estado do servidor
+      router.refresh()
     }
   }
 

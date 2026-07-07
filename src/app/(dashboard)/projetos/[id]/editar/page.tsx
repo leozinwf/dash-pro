@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
-import { ArrowLeft, Save, FolderGit, Link as LinkIcon, Database, FileText, AlignLeft, Lock } from 'lucide-react'
+import { ArrowLeft, Save, FolderGit, Link as LinkIcon, Database, FileText, AlignLeft, Lock, Server, AtSign, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 
 export default function EditarProjetoPage() {
@@ -16,7 +16,9 @@ export default function EditarProjetoPage() {
   const [nome, setNome] = useState('')
   const [githubRepo, setGithubRepo] = useState('')
   const [projetoUrl, setProjetoUrl] = useState('')
+  const [vercelId, setVercelId] = useState('')
   const [supabaseId, setSupabaseId] = useState('')
+  const [supabaseAccount, setSupabaseAccount] = useState('')
   const [databasePassword, setDatabasePassword] = useState('')
   const [observacoes, setObservacoes] = useState('')
   const [envFile, setEnvFile] = useState('') 
@@ -41,7 +43,9 @@ export default function EditarProjetoPage() {
         setNome(data.nome || '')
         setGithubRepo(data.github_repo || '')
         setProjetoUrl(data.projeto_url || '')
+        setVercelId(data.vercel_id || '')
         setSupabaseId(data.supabase_id || '')
+        setSupabaseAccount(data.supabase_account || '')
         setDatabasePassword(data.database_password || '')
         setObservacoes(data.observacoes || '')
         setEnvFile(data.env_file || '')
@@ -75,7 +79,9 @@ export default function EditarProjetoPage() {
           nome,
           github_repo: cleanGithubRepo,
           projeto_url: projetoUrl,
+          vercel_id: vercelId,
           supabase_id: supabaseId,
+          supabase_account: supabaseAccount,
           database_password: databasePassword,
           env_file: envFile,
           env_local_file: envLocalFile,
@@ -128,8 +134,19 @@ export default function EditarProjetoPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2"><Server size={16} /> Vercel Project ID</label>
+                <input type="text" value={vercelId} onChange={(e) => setVercelId(e.target.value)} className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition" />
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2"><Database size={16} /> Supabase Project Ref</label>
                 <input type="text" value={supabaseId} onChange={(e) => setSupabaseId(e.target.value)} className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2"><AtSign size={16} /> Conta Supabase</label>
+                <input type="email" value={supabaseAccount} onChange={(e) => setSupabaseAccount(e.target.value)} placeholder="seu@email.com" className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2"><Lock size={16} /> Senha do Banco</label>
@@ -138,15 +155,32 @@ export default function EditarProjetoPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Arquivo .env */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2"><FileText size={16} /> Arquivo .env</label>
-                <input type="file" accept=".env,text/plain" onChange={(e) => handleFileUpload(e, setEnvFile)} className="w-full px-4 py-1.5 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700" />
-                {envFile && <p className="mt-1 text-xs text-green-600 font-medium">Arquivo .env salvo.</p>}
+                <div className="flex items-center gap-2">
+                  <input id="input_env_file" type="file" accept=".env,text/plain" onChange={(e) => handleFileUpload(e, setEnvFile)} className="w-full px-4 py-1.5 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700" />
+                  {envFile && (
+                    <button type="button" onClick={() => { setEnvFile(''); (document.getElementById('input_env_file') as HTMLInputElement).value = ''; }} className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition" title="Excluir arquivo">
+                      <Trash2 size={18} />
+                    </button>
+                  )}
+                </div>
+                {envFile ? <p className="mt-1 text-xs text-green-600 font-medium">Arquivo salvo ou carregado.</p> : <p className="mt-1 text-xs text-gray-400">Nenhum arquivo .env.</p>}
               </div>
+
+              {/* Arquivo .env.local */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2"><FileText size={16} /> Arquivo .env.local</label>
-                <input type="file" accept=".local,.env,text/plain" onChange={(e) => handleFileUpload(e, setEnvLocalFile)} className="w-full px-4 py-1.5 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700" />
-                {envLocalFile && <p className="mt-1 text-xs text-green-600 font-medium">Arquivo .env.local salvo.</p>}
+                <div className="flex items-center gap-2">
+                  <input id="input_env_local_file" type="file" accept=".local,.env,text/plain" onChange={(e) => handleFileUpload(e, setEnvLocalFile)} className="w-full px-4 py-1.5 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700" />
+                  {envLocalFile && (
+                    <button type="button" onClick={() => { setEnvLocalFile(''); (document.getElementById('input_env_local_file') as HTMLInputElement).value = ''; }} className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition" title="Excluir arquivo">
+                      <Trash2 size={18} />
+                    </button>
+                  )}
+                </div>
+                {envLocalFile ? <p className="mt-1 text-xs text-green-600 font-medium">Arquivo salvo ou carregado.</p> : <p className="mt-1 text-xs text-gray-400">Nenhum arquivo .env.local.</p>}
               </div>
             </div>
 
