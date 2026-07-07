@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
-import { FolderGit, AlertCircle, Clock, Database, Link as LinkIcon, Edit, Trash2, Key, Lock, Eye, EyeOff, X, Info, ExternalLink, Server, Copy, CheckCircle2 } from 'lucide-react'
+import { FolderGit, AlertCircle, Database, Link as LinkIcon, AlertTriangle, Edit, Trash2, Key, Lock, Eye, EyeOff, X, Info, ExternalLink, Server, Copy } from 'lucide-react'
 import Link from 'next/link'
 
 export default function ProjectCard({ projeto }: { projeto: any }) {
@@ -26,7 +26,7 @@ export default function ProjectCard({ projeto }: { projeto: any }) {
   }
 
   const handleCopyEnv = (text: string) => { navigator.clipboard.writeText(text); alert('Copiado!'); }
-  
+
   const handleSaveEnv = async (type: 'env' | 'local') => {
     const field = type === 'env' ? 'env_file' : 'env_local_file'
     await supabase.from('projetos').update({ [field]: tempEnvContent }).eq('id', projeto.id)
@@ -35,7 +35,7 @@ export default function ProjectCard({ projeto }: { projeto: any }) {
   }
 
   const handleDeleteEnv = async (type: 'env' | 'local') => {
-    if(!confirm('Certeza que deseja excluir este arquivo?')) return;
+    if (!confirm('Certeza que deseja excluir este arquivo?')) return;
     const field = type === 'env' ? 'env_file' : 'env_local_file'
     await supabase.from('projetos').update({ [field]: null }).eq('id', projeto.id)
     router.refresh()
@@ -54,7 +54,7 @@ export default function ProjectCard({ projeto }: { projeto: any }) {
             <button onClick={() => setShowModal(true)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"><Trash2 size={16} /></button>
           </div>
         </div>
-        
+
         <div className="space-y-5 flex-1">
           {/* Status GitHub */}
           <div className="flex items-start gap-3">
@@ -80,21 +80,59 @@ export default function ProjectCard({ projeto }: { projeto: any }) {
                   <div className="flex items-center gap-2">
                     {projeto.supabaseInfo.status.includes('ACTIVE') && (
                       <span className="flex items-center gap-1.5">
-                        <span className="relative flex h-2.5 w-2.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span></span>
+                        <span className="relative flex h-2.5 w-2.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                        </span>
                         <span className="text-sm font-medium text-green-700">Online</span>
                       </span>
                     )}
-                    {projeto.supabaseInfo.status === 'PAUSED' && <span className="flex items-center gap-1.5 text-red-600"><AlertCircle size={14}/> Pausado</span>}
+
+                    {projeto.supabaseInfo.status === 'PAUSED' && (
+                      <span className="flex items-center gap-1.5 text-red-600">
+                        <AlertCircle size={14} />
+                        Pausado
+                      </span>
+                    )}
+
+                    {projeto.supabaseInfo.status === 'UNHEALTHY' && (
+                      <span className="flex items-center gap-1.5 text-yellow-600">
+                        <AlertTriangle size={14} />
+                        Instável
+                      </span>
+                    )}
                   </div>
-                  {/* Nome corrigido para evitar confusão com API Requests */}
+
                   {projeto.dbMetrics && (
                     <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-gray-100">
-                      <div><p className="text-[10px] text-gray-500 uppercase font-semibold">Transações Totais (BD)</p><p className="text-sm font-medium text-gray-900">{new Intl.NumberFormat('pt-BR').format(projeto.dbMetrics.total_requests)}</p></div>
-                      <div><p className="text-[10px] text-gray-500 uppercase font-semibold">Taxa de Sucesso</p><p className={`text-sm font-medium ${projeto.dbMetrics.success_rate >= 99 ? 'text-green-600' : 'text-orange-600'}`}>{projeto.dbMetrics.success_rate}%</p></div>
+                      <div>
+                        <p className="text-[10px] text-gray-500 uppercase font-semibold">
+                          Transações Totais (BD)
+                        </p>
+                        <p className="text-sm font-medium text-gray-900">
+                          {new Intl.NumberFormat('pt-BR').format(projeto.dbMetrics.total_requests)}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-[10px] text-gray-500 uppercase font-semibold">
+                          Taxa de Sucesso
+                        </p>
+                        <p
+                          className={`text-sm font-medium ${projeto.dbMetrics.success_rate >= 99
+                              ? 'text-green-600'
+                              : 'text-orange-600'
+                            }`}
+                        >
+                          {projeto.dbMetrics.success_rate}%
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
-              ) : <span className="text-sm text-gray-400">Ref não configurada</span>}
+              ) : (
+                <span className="text-sm text-gray-400">Ref não configurada</span>
+              )}
             </div>
           </div>
 
@@ -173,15 +211,15 @@ export default function ProjectCard({ projeto }: { projeto: any }) {
           <div className="bg-white rounded-2xl p-6 w-full max-w-3xl shadow-xl max-h-[90vh] flex flex-col">
             <div className="flex justify-between items-center mb-6"><h3 className="text-xl font-bold flex items-center gap-2"><Key className="text-blue-600" /> Chaves de Ambiente</h3><button onClick={() => setShowEnvModal(false)}><X size={24} className="text-gray-400" /></button></div>
             <div className="overflow-y-auto flex-1 space-y-6 pr-2">
-              
+
               {projeto.env_file && (
                 <div className="border border-gray-200 rounded-lg overflow-hidden">
                   <div className="bg-gray-100 px-4 py-2 flex justify-between items-center border-b border-gray-200">
                     <h4 className="font-bold text-gray-700 text-sm">.env</h4>
                     <div className="flex gap-2">
-                      <button onClick={() => handleCopyEnv(projeto.env_file)} className="text-xs flex items-center gap-1 text-gray-600 hover:text-black"><Copy size={14}/> Copiar</button>
-                      <button onClick={() => { setEditEnvType('env'); setTempEnvContent(projeto.env_file) }} className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-800"><Edit size={14}/> Editar</button>
-                      <button onClick={() => handleDeleteEnv('env')} className="text-xs flex items-center gap-1 text-red-600 hover:text-red-800"><Trash2 size={14}/> Excluir</button>
+                      <button onClick={() => handleCopyEnv(projeto.env_file)} className="text-xs flex items-center gap-1 text-gray-600 hover:text-black"><Copy size={14} /> Copiar</button>
+                      <button onClick={() => { setEditEnvType('env'); setTempEnvContent(projeto.env_file) }} className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-800"><Edit size={14} /> Editar</button>
+                      <button onClick={() => handleDeleteEnv('env')} className="text-xs flex items-center gap-1 text-red-600 hover:text-red-800"><Trash2 size={14} /> Excluir</button>
                     </div>
                   </div>
                   {editEnvType === 'env' ? (
@@ -195,9 +233,9 @@ export default function ProjectCard({ projeto }: { projeto: any }) {
                   <div className="bg-gray-100 px-4 py-2 flex justify-between items-center border-b border-gray-200">
                     <h4 className="font-bold text-gray-700 text-sm">.env.local</h4>
                     <div className="flex gap-2">
-                      <button onClick={() => handleCopyEnv(projeto.env_local_file)} className="text-xs flex items-center gap-1 text-gray-600 hover:text-black"><Copy size={14}/> Copiar</button>
-                      <button onClick={() => { setEditEnvType('local'); setTempEnvContent(projeto.env_local_file) }} className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-800"><Edit size={14}/> Editar</button>
-                      <button onClick={() => handleDeleteEnv('local')} className="text-xs flex items-center gap-1 text-red-600 hover:text-red-800"><Trash2 size={14}/> Excluir</button>
+                      <button onClick={() => handleCopyEnv(projeto.env_local_file)} className="text-xs flex items-center gap-1 text-gray-600 hover:text-black"><Copy size={14} /> Copiar</button>
+                      <button onClick={() => { setEditEnvType('local'); setTempEnvContent(projeto.env_local_file) }} className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-800"><Edit size={14} /> Editar</button>
+                      <button onClick={() => handleDeleteEnv('local')} className="text-xs flex items-center gap-1 text-red-600 hover:text-red-800"><Trash2 size={14} /> Excluir</button>
                     </div>
                   </div>
                   {editEnvType === 'local' ? (
